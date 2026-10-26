@@ -1,0 +1,10 @@
+{
+  "name": "ludoteca-tusa",
+  "private": true,
+  "type": "module",
+  "description": "Inventario de juegos de Nintendo Switch y Switch 2",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2"
+  }
+}

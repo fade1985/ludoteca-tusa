@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ludoteca de la Tusa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0b1e; --bg2:#17132f; --panel:#1f1a3d; --ink:#f3ecff; --mute:#9b90c9;
+  --red:#ff3c5a; --blue:#25c4ff; --yellow:#ffd23f; --green:#3dff8f; --purple:#a35bff;
+  --s1:#ff3c5a; --s2:#25c4ff;
+  --px:4px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'VT323',monospace; font-size:20px; line-height:1.25;
+  min-height:100vh; overflow-x:hidden;
+  background-image:
+    radial-gradient(circle at 15% 0%, #3a1b6b55 0, transparent 40%),
+    radial-gradient(circle at 85% 100%, #0b4d6b55 0, transparent 40%),
+    linear-gradient(#ffffff06 1px, transparent 1px),
+    linear-gradient(90deg,#ffffff06 1px, transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;
+}
+/* CRT */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:repeating-linear-gradient(0deg,#0000 0 2px,#00000038 2px 3px);
+  mix-blend-mode:multiply;
+}
+body.nocrt::after{display:none}
+.pix{font-family:'Press Start 2P',monospace}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* BOOT */
+#boot{position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;transition:opacity .5s}
+#boot h1{font-family:'Press Start 2P';font-size:clamp(18px,4vw,34px);margin:0;text-align:center;
+  background:linear-gradient(90deg,var(--red),var(--yellow),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:pop .6s steps(6) both}
+#boot p{font-family:'Press Start 2P';font-size:12px;color:var(--yellow);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+@keyframes pop{from{transform:scale(.2)}to{transform:scale(1)}}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:50;background:#0d0b1ee8;backdrop-filter:blur(6px);border-bottom:var(--px) solid #000;box-shadow:0 4px 0 #2b2457}
+.wrap{max-width:1400px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;gap:16px;padding:14px 0;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px}
+.joy{width:44px;height:44px;display:flex;flex-shrink:0;border:3px solid #000;border-radius:10px;overflow:hidden;box-shadow:3px 3px 0 #000}
+.joy i{flex:1}.joy i:first-child{background:var(--blue)}.joy i:last-child{background:var(--red)}
+.logo h1{font-family:'Press Start 2P';font-size:clamp(12px,2vw,18px);margin:0;letter-spacing:1px;text-shadow:3px 3px 0 var(--purple)}
+.logo small{display:block;color:var(--mute);font-size:18px}
+.spacer{flex:1}
+.btn{font-family:'Press Start 2P';font-size:10px;padding:10px 12px;background:var(--panel);border:3px solid #000;box-shadow:3px 3px 0 #000;transition:transform .08s}
+.btn:hover{background:#2c2557}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 #000}
+.btn.primary{background:var(--yellow);color:#000}
+.btn.primary:hover{background:#ffe27a}
+.btn.danger{background:var(--red);color:#fff}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:6px 0 14px}
+.stat{background:var(--panel);border:3px solid #000;box-shadow:4px 4px 0 #000;padding:10px 12px;position:relative;overflow:hidden}
+.stat b{font-family:'Press Start 2P';font-size:20px;display:block;margin-top:4px}
+.stat span{color:var(--mute);font-size:18px}
+.xp{grid-column:span 2;min-width:0}
+.bar{height:18px;background:#000;border:2px solid #000;margin-top:8px;position:relative}
+.bar i{display:block;height:100%;width:0;transition:width .8s steps(20);
+  background:repeating-linear-gradient(90deg,var(--green) 0 10px,#2bd476 10px 12px)}
+@media (max-width:520px){.xp{grid-column:span 1}}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:0 0 14px}
+.seg{display:flex;border:3px solid #000;box-shadow:3px 3px 0 #000}
+.seg button{font-family:'Press Start 2P';font-size:9px;padding:10px;background:var(--panel);border:0;border-right:3px solid #000}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:#000}
+.seg button.on.s1{background:var(--s1);color:#fff}
+.seg button.on.s2{background:var(--s2);color:#000}
+.search{flex:1;min-width:200px;display:flex;align-items:center;background:#000;border:3px solid #000;box-shadow:3px 3px 0 #2b2457;padding:0 10px}
+.search input{flex:1;background:transparent;border:0;color:var(--ink);font:inherit;font-size:22px;padding:6px;outline:none;min-width:0}
+select{font:inherit;font-size:20px;background:var(--panel);color:var(--ink);border:3px solid #000;box-shadow:3px 3px 0 #000;padding:6px}
+
+/* CATEGORÍAS */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 4px 14px 0;scrollbar-width:thin;scrollbar-color:#3a3270 transparent}
+.chip{flex:0 0 auto;font-size:19px;padding:4px 10px;background:var(--panel);border:3px solid #000;box-shadow:3px 3px 0 #000;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.chip em{font-style:normal;font-family:'Press Start 2P';font-size:8px;background:#000;color:var(--mute);padding:3px 5px}
+.chip:hover{background:#2c2557}
+.chip.on{background:var(--purple);color:#fff}
+.chip.on em{color:var(--yellow)}
+.letter .ico{font-size:18px}
+
+/* GRID */
+main{padding:20px 0 80px}
+.letter{font-family:'Press Start 2P';font-size:14px;color:var(--yellow);margin:26px 0 12px;display:flex;align-items:center;gap:12px}
+.letter::after{content:"";flex:1;height:4px;background:repeating-linear-gradient(90deg,#3a3270 0 8px,transparent 8px 12px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:22px}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+.card{position:relative;perspective:800px;cursor:pointer;animation:drop .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes drop{from{opacity:0;transform:translateY(-18px) scale(.9)}}
+.case{position:relative;aspect-ratio:10/16;border:3px solid #000;border-radius:8px;overflow:hidden;background:#111;
+  box-shadow:6px 6px 0 #000;transition:transform .15s,box-shadow .15s;transform-style:preserve-3d}
+.card:hover .case{box-shadow:10px 10px 0 #000}
+.case .band{position:absolute;top:0;left:0;right:0;height:13%;z-index:2;display:flex;align-items:center;justify-content:center;
+  font-family:'Press Start 2P';font-size:7px;white-space:nowrap;overflow:hidden;color:#fff;border-bottom:3px solid #000}
+.case.s1 .band{background:var(--s1)}
+.case.s2 .band{background:linear-gradient(90deg,var(--s2),#7ae0ff);color:#000}
+.case .art{position:absolute;inset:13% 0 0 0;background-size:cover;background-position:center;image-rendering:auto}
+.case .shine{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(115deg,transparent 30%,#ffffff2e 45%,transparent 60%);
+  background-size:250% 100%;background-position:100% 0;transition:background-position .6s}
+.card:hover .shine{background-position:0 0}
+.fallback{position:absolute;inset:13% 0 0 0;display:flex;align-items:flex-end;padding:10px;
+  font-family:'Press Start 2P';font-size:10px;line-height:1.5;color:#fff;text-shadow:2px 2px 0 #000;word-break:break-word}
+.fallback::before{content:"";position:absolute;inset:0;background-image:radial-gradient(#ffffff22 1px,transparent 1px);background-size:6px 6px}
+.fallback .glyph{position:absolute;top:18%;left:50%;transform:translateX(-50%);font-size:44px;opacity:.85;text-shadow:4px 4px 0 #0006}
+.loading .art{animation:shim 1s steps(4) infinite;background:linear-gradient(90deg,#1c1838,#2f2860,#1c1838);background-size:300% 100%}
+@keyframes shim{to{background-position:-300% 0}}
+.title{margin-top:10px;font-size:20px;line-height:1.05;min-height:2.1em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chk{position:absolute;top:calc(13% + 10px);right:-8px;z-index:5;width:40px;height:40px;border:3px solid #000;background:#2a2450;box-shadow:3px 3px 0 #000;
+  display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P';font-size:14px;color:#000;transition:transform .1s}
+.chk:hover{transform:scale(1.1) rotate(-6deg)}
+.chk.on{background:var(--green)}
+.chk:not(.on)::after{content:"?";color:var(--mute)}
+.chk.on::after{content:"✓"}
+.done .case::after{content:"CLEAR!";position:absolute;z-index:4;bottom:12px;left:-6px;transform:rotate(-8deg);
+  font-family:'Press Start 2P';font-size:10px;background:var(--yellow);color:#000;padding:6px 10px;border:3px solid #000;box-shadow:3px 3px 0 #000}
+.stars{color:var(--yellow);font-size:16px;letter-spacing:2px}
+.empty{text-align:center;padding:60px 0;font-family:'Press Start 2P';font-size:12px;color:var(--mute);line-height:2}
+
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:200;background:#05040dcc;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.open{display:flex}
+.sheet{width:min(960px,100%);max-height:92vh;overflow:auto;background:var(--bg2);border:4px solid #000;box-shadow:10px 10px 0 #000,0 0 0 4px var(--purple) inset;
+  animation:zoomin .25s steps(5) both;position:relative}
+@keyframes zoomin{from{transform:scale(.6);opacity:0}}
+.sheet .x{position:absolute;top:10px;right:10px;z-index:3}
+.ficha{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px}
+@media (max-width:720px){.ficha{grid-template-columns:1fr}.ficha .cv{max-width:240px;margin:0 auto}}
+.ficha .cv{position:relative}
+.ficha .cv .case{box-shadow:8px 8px 0 #000}
+.ficha h2{font-family:'Press Start 2P';font-size:clamp(14px,2.2vw,20px);line-height:1.5;margin:6px 50px 10px 0;text-shadow:3px 3px 0 var(--purple)}
+.tag{display:inline-block;font-family:'Press Start 2P';font-size:8px;padding:6px 8px;border:2px solid #000;margin:0 6px 6px 0;background:var(--panel)}
+.tag.s1{background:var(--s1)}.tag.s2{background:var(--s2);color:#000}.tag.ok{background:var(--green);color:#000}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:14px 0;background:#0007;border:3px solid #000;padding:12px}
+.dl dt{color:var(--yellow);font-family:'Press Start 2P';font-size:9px;padding-top:6px}
+.dl dd{margin:0}
+.desc{font-size:21px;color:#ddd5f7;white-space:pre-line}
+.desc a{color:var(--blue)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.rate button{background:none;border:0;font-size:28px;color:#4a4180;padding:0 2px}
+.rate button.on{color:var(--yellow);text-shadow:2px 2px 0 #000}
+textarea,.field input,.field select{width:100%;font:inherit;font-size:20px;background:#000;color:var(--ink);border:3px solid #000;box-shadow:inset 0 0 0 2px #2b2457;padding:8px;outline:none}
+textarea:focus,.field input:focus{box-shadow:inset 0 0 0 2px var(--yellow)}
+.field{margin-top:12px}
+.field label{display:block;font-family:'Press Start 2P';font-size:9px;color:var(--mute);margin-bottom:6px}
+details{margin-top:16px;border:3px dashed #3a3270;padding:10px}
+summary{cursor:pointer;font-family:'Press Start 2P';font-size:9px;color:var(--mute)}
+.form{padding:24px}
+.form h2{font-family:'Press Start 2P';font-size:16px;margin:0 50px 10px 0}
+.toggle{display:flex;align-items:center;gap:10px;margin-top:14px;cursor:pointer;font-size:22px}
+.toggle input{width:22px;height:22px;accent-color:var(--green)}
+
+/* TOAST + FX */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140%);z-index:300;font-family:'Press Start 2P';font-size:11px;
+  background:var(--yellow);color:#000;border:3px solid #000;box-shadow:5px 5px 0 #000;padding:14px 18px;transition:transform .25s steps(4);max-width:calc(100% - 32px);text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.px{position:fixed;width:8px;height:8px;z-index:400;pointer-events:none}
+/* MÓVIL */
+@media (max-width:640px){
+  body{font-size:18px}
+  header{position:static}
+  .top{position:sticky;top:0;z-index:60;background:#0d0b1ef2;margin:0 -16px;padding:10px 16px;border-bottom:3px solid #000;gap:10px;flex-wrap:nowrap}
+  .logo{min-width:0;gap:8px}
+  .joy{width:34px;height:34px}
+  .logo h1{font-size:10px;line-height:1.4}
+  .logo small{display:none}
+  .btn{font-size:9px;padding:9px 10px;white-space:nowrap}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:12px}
+  .stat{padding:6px 8px;box-shadow:3px 3px 0 #000}
+  .stat b{font-size:12px;margin-top:2px}
+  .stat span{font-size:15px}
+  .bar{height:12px;margin-top:6px}
+  .xp{grid-column:1 / -1}
+  .controls{gap:10px}
+  .seg{width:100%}
+  .seg button{flex:1;font-size:8px;padding:10px 4px}
+  .search{min-width:0;width:100%;flex:1 1 100%}
+  select{width:100%}
+  main{padding-top:6px}
+  .letter{font-size:12px;margin:20px 0 10px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px}
+  .case{box-shadow:4px 4px 0 #000}
+  .chk{width:34px;height:34px;right:-4px;font-size:12px}
+  .title{font-size:18px}
+  .done .case::after{font-size:8px;padding:4px 7px;bottom:8px}
+  .card .case{transform:none!important}
+  .card{animation:none}
+  .modal{padding:0;align-items:stretch}
+  .sheet{max-height:100vh;height:100%;width:100%;border:0;box-shadow:none;animation:none}
+  .sheet .x{position:fixed;top:12px;right:12px;z-index:210}
+  .ficha{padding:56px 16px 24px;gap:18px}
+  .ficha .cv{width:100%;max-width:200px}
+  .ficha h2{margin-right:0}
+  .dl{grid-template-columns:1fr;gap:2px}
+  .dl dd{margin-bottom:6px}
+  .desc{font-size:19px}
+  .form{padding:56px 16px 24px}
+  .row .btn{flex:1 1 auto}
+  #toast{font-size:9px;bottom:16px}
+}
+@media (prefers-reduced-motion:reduce){.card,.sheet,#boot h1{animation:none}}
+@media (min-width:380px) and (max-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+
+/* BUSCADOR DE PORTADAS */
+.picker{margin-top:8px;display:grid;gap:8px;max-height:46vh;overflow:auto;padding-right:4px}
+.picker:empty{display:none}
+.pk{display:flex;gap:12px;align-items:center;text-align:left;background:#0009;border:3px solid #000;box-shadow:3px 3px 0 #000;padding:6px;width:100%}
+.pk:hover,.pk:focus-visible{background:#2c2557;outline:none}
+.pk-img{flex:0 0 46px;height:64px;background:#1c1838 center/cover;border:2px solid #000;display:flex;align-items:center;justify-content:center;color:var(--mute)}
+.pk-t{min-width:0;display:flex;flex-direction:column;gap:2px}
+.pk-t b{font-weight:normal;font-size:21px;line-height:1.05;overflow:hidden;text-overflow:ellipsis}
+.pk-t small{color:var(--mute);font-size:17px}
+.pk-sw{font-family:'Press Start 2P';font-size:7px;background:var(--s1);color:#fff;padding:3px 5px;border:2px solid #000;margin-left:4px;vertical-align:middle}
+.pk-msg{font-family:'Press Start 2P';font-size:9px;color:var(--mute);padding:10px 0;line-height:1.8}
+.chosen{display:flex;gap:12px;align-items:center;margin-top:10px;background:#3dff8f22;border:3px solid var(--green);padding:6px}
+.chosen .pk-img{flex-basis:40px;height:56px}
+.chosen span{flex:1;min-width:0}
+.chosen:empty{display:none}
+.photo{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.photo input{display:none}
+.photo small{color:var(--mute);font-size:17px}
+/* AVISOS Y MODO */
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#ffd23f1f;border:3px solid var(--yellow);padding:8px 12px;margin:0 0 14px;font-size:19px}
+.banner:empty{display:none}
+.banner .btn{margin-left:auto}
+.info{background:#0007;border:3px solid #000;padding:10px 12px;font-size:19px;color:#ddd5f7;margin-bottom:12px}
+.info b{font-family:'Press Start 2P';font-size:9px;color:var(--yellow);display:block;margin-bottom:6px}
+#sync{color:var(--green)}
+#sync.err{color:var(--red)}
+.err-msg{color:var(--red);font-size:19px;min-height:1.2em;margin-top:8px}
+footer{text-align:center;color:var(--mute);padding:24px 16px 40px;font-size:18px}
+</style>
+</head>
+<body>
+<div id="boot"><h1>LUDOTECA<br>DE LA TUSA</h1><p>PRESS START</p></div>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="logo"><div class="joy"><i></i><i></i></div><div><h1>LUDOTECA DE LA TUSA</h1><small>inventario de cartuchos · Switch &amp; Switch 2 <span id="sync"></span></small></div></div>
+      <div class="spacer"></div>
+      <button class="btn primary" id="addBtn">+ AÑADIR</button>
+      <button class="btn" id="menuBtn" title="Opciones">☰</button>
+    </div>
+    <div class="banner" id="banner"></div>
+    <div class="stats" id="stats"></div>
+    <div class="controls">
+      <div class="seg" id="platSeg">
+        <button data-v="all" class="on">TODO</button>
+        <button data-v="s2" class="s2">SWITCH 2</button>
+        <button data-v="s1" class="s1">SWITCH</button>
+      </div>
+      <div class="seg" id="stateSeg">
+        <button data-v="all" class="on">TODOS</button>
+        <button data-v="done">✓ PASADOS</button>
+        <button data-v="todo">PENDIENTES</button>
+      </div>
+      <label class="search"><span>🔍</span><input id="q" placeholder="Buscar juego..." autocomplete="off"></label>
+      <select id="sort">
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="recent">Añadidos recientes</option>
+        <option value="rating">Mejor valorados</option>
+        <option value="cat">Agrupar por categoría</option>
+      </select>
+    </div>
+    <div class="chips" id="cats"></div>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+<footer id="foot"></footer>
+
+<!-- FICHA -->
+<div class="modal" id="ficha"><div class="sheet" id="fichaSheet"></div></div>
+<!-- FORM -->
+<div class="modal" id="formM"><div class="sheet"><button class="btn x" data-close>✕</button>
+  <form class="form" id="addForm" autocomplete="off">
+    <h2>NUEVO JUEGO</h2>
+    <div class="field"><label>TÍTULO · escribe y elige la portada de la lista</label><input name="title" id="addTitle" required placeholder="Ej: Metroid Prime 4"></div>
+    <div class="chosen" id="addChosen"></div>
+    <div class="picker" id="addPicker"></div>
+    <div class="field"><label>PLATAFORMA</label><select name="platform"><option value="s2">Nintendo Switch 2</option><option value="s1">Nintendo Switch</option></select></div>
+    <div class="field"><label>CATEGORÍA (opcional, si no se pone se deduce sola)</label><input name="cat" list="catList" placeholder="Ej: Metroidvania"></div>
+    <label class="photo"><span class="btn">📷 FOTO PROPIA</span><input type="file" name="photo" id="addPhoto" accept="image/*"><small id="addPhotoName">opcional: una foto de tu caja sustituye a la portada</small></label>
+    <label class="toggle"><input type="checkbox" name="done"> Ya me lo he pasado</label>
+    <details><summary>AVANZADO</summary>
+      <div class="field"><label>BÚSQUEDA EN WIKIPEDIA (si no eliges nada de la lista)</label><input name="q" placeholder="Igual que el título"></div>
+      <div class="field"><label>URL DE PORTADA</label><input name="cover" placeholder="https://..."></div>
+    </details>
+    <div class="row"><button class="btn primary" type="submit" id="addSubmit">GUARDAR</button><button class="btn" type="button" data-close>CANCELAR</button></div>
+  </form>
+</div></div>
+<!-- MENU -->
+<div class="modal" id="menuM"><div class="sheet" style="width:min(520px,100%)"><button class="btn x" data-close>✕</button>
+  <div class="form">
+    <h2>OPCIONES</h2>
+    <div class="info" id="modeInfo"></div>
+    <div class="row" style="flex-direction:column;align-items:stretch">
+      <button class="btn" id="keyBtn">🔑 MODO EDICIÓN</button>
+      <button class="btn" id="expBtn">⬇ EXPORTAR COPIA (.json)</button>
+      <button class="btn" id="impBtn">⬆ IMPORTAR COPIA</button>
+      <button class="btn" id="refetchBtn">↻ RECARGAR PORTADAS QUE FALTAN</button>
+      <button class="btn" id="sndBtn">♪ SONIDO: ON</button>
+      <button class="btn" id="crtBtn">▤ EFECTO CRT: ON</button>
+      <button class="btn danger" id="resetBtn">⚠ RESTAURAR LISTA ORIGINAL</button>
+    </div>
+    <input type="file" id="impFile" accept=".json,application/json" hidden>
+  </div>
+</div></div>
+<!-- CONTRASEÑA -->
+<div class="modal" id="authM"><div class="sheet" style="width:min(460px,100%)"><button class="btn x" data-close>✕</button>
+  <form class="form" id="authForm" autocomplete="on">
+    <h2>MODO EDICIÓN</h2>
+    <p style="margin:0;color:var(--mute)">Cualquiera con el enlace puede ver la ludoteca. Para añadir o cambiar juegos, introduce la contraseña.</p>
+    <input type="text" name="username" value="ludoteca" autocomplete="username" hidden>
+    <div class="field"><label>CONTRASEÑA</label><input type="password" id="authPw" autocomplete="current-password" required></div>
+    <div class="err-msg" id="authErr"></div>
+    <div class="row"><button class="btn primary" type="submit">ENTRAR</button><button class="btn" type="button" data-close>CANCELAR</button></div>
+  </form>
+</div></div>
+<div id="toast"></div>
+<datalist id="catList"></datalist>
+
+<script>
+/* ===== DATOS INICIALES =====  [título, pasado(1/0), búsqueda opcional] */
+const SEED_S2 = [
+ ["Hades II",0],["Cronos: The New Dawn",0],["Little Nightmares III",0],["Little Nightmares Enhanced Edition",0,"Little Nightmares"],
+ ["Kirby y la Tierra Olvidada",0,"Kirby and the Forgotten Land"],["Donkey Kong Bananza",1],["Cyberpunk 2077",0],
+ ["Zelda: Tears of the Kingdom",0,"The Legend of Zelda: Tears of the Kingdom"],["Animal Crossing",0,"Animal Crossing: New Horizons"],
+ ["Reanimal",0],["Yooka-Replaylee",0],["Pragmata",0],["Pokémon Pokopia",1],["Goodnight Universe",0],["Split Fiction",0],
+ ["Sonic Frontiers",0],["Resident Evil 7",1,"Resident Evil 7: Biohazard"],["Resident Evil Village",1],["Resident Evil Requiem",1],
+ ["Yoshi and the Mysterious Book",1],["The Disney Afternoon Collection",0],["Momento",0],["Moonlight Peaks",0],["Elden Ring",1],
+ ["Orbitals",0],["Lies of P",0],["The Witch's Bakery",0],["MIO: Memories in Orbit",0]
+];
+const SEED_S1 = [
+ ["Absolum",0],["A Space for the Unbound: Special Edition",0,"A Space for the Unbound"],["Aeterna Noctis",0],
+ ["Alex Kidd in Miracle World DX",0],["Alien: Isolation – The Collection",1,"Alien: Isolation"],["A Little to the Left",1],
+ ["Among the Sleep",1],["Animal Well",0],["ANNO: Mutationem – Complete Edition",0,"Anno: Mutationem"],
+ ["Arise: A Simple Story – Definitive Edition",0,"Arise: A Simple Story"],["A Tiny Sticker Tale: Magic Book Edition",1,"A Tiny Sticker Tale"],
+ ["Baldo: The Guardian Owls",0],["Bear and Breakfast",1],["Beyond a Steel Sky",0],["Bomberman Collection",0,"Bomberman Collection Nintendo Switch"],
+ ["Bramble: The Mountain King",1],["Broken Sword: La leyenda de los Templarios",1,"Broken Sword – The Shadow of the Templars"],
+ ["Bubble Ghost Remake",0,"Bubble Ghost"],["Bye Sweet Carole",1],
+ ["Captain Toad: Treasure Tracker",0],["Celeste",1],["Children of Morta",1],["Clock Tower",0,"Clock Tower 1995 video game"],["Core Keeper",0],
+ ["Cotton Reboot!",0],["Cozy Grove",1],["Crash Bandicoot N. Sane Trilogy",0],["Crash Bandicoot 4: It's About Time",0],["Cuisineer",1],
+ ["Cult of the Lamb",1],["Cuphead",1],
+ ["Dark Souls Remastered",0],["Dave the Diver",1],["Discounty",0],["Disney Illusion Island",1],["Dredge",1],
+ ["Doki Doki Literature Club Plus!",1],["Dordogne",1],
+ ["Eastward",0],["Emio – The Smiling Man",0,"Emio – The Smiling Man: Famicom Detective Club"],["Ender Lilies: Quietus of the Knights",0],
+ ["Farming Camp",0],["Flashback",0,"Flashback 1992 video game"],["Forgive Me Father",0],
+ ["Gerda: A Flame in Winter",0],["Ghost Song",0],["Gimmick! Special Edition",0,"Gimmick! video game"],["Gimmick! 2",0],
+ ["Greak: Memories of Azur",1],["Grimoire Groves Deluxe Edition",0,"Grimoire Groves"],["Gris",1,"Gris video game"],
+ ["Hollow Knight",1],["The House of the Dead 2: Remake",1,"The House of the Dead 2"],
+ ["Iwakura Aria",0],["I Hate This Place: Elena's Edition",0,"I Hate This Place"],
+ ["Killer Frequency",0],
+ ["Last Time I Saw You",1],["Life is Strange: Arcadia Bay Collection",1,"Life Is Strange"],["Little Nightmares Enhanced Edition",0,"Little Nightmares"],
+ ["Little Nightmares III Collector's Edition",0,"Little Nightmares III"],["Life is Strange: Double Exposure",1],["Luigi's Mansion 3",0],
+ ["Los Pitufos: Dreams",0,"The Smurfs – Dreams"],
+ ["Marsupilami: Hoobadventure 2",0,"Marsupilami Hoobadventure"],["Mineko's Night Market",1],["Moomintroll: Winter's Warmth",0],
+ ["Narita Boy",0],["Neva",1,"Neva video game"],["Ninja Gaiden: Ragebound",0],
+ ["Ōkami HD",0,"Ōkami"],["Ori: The Collection",1,"Ori and the Blind Forest"],["Outer Wilds: Archaeologist Edition",0,"Outer Wilds"],
+ ["Overcooked! All You Can Eat",1],["Owlboy",1],
+ ["Paper Mario: La Puerta Milenaria",0,"Paper Mario: The Thousand-Year Door 2024"],["Paper Mario: The Origami King",0],["Potion Permit",0],
+ ["Prince of Persia: The Lost Crown",0],["Pronty",0,"Pronty: Fishy Adventure"],
+ ["Rayman 30th Anniversary Edition",1,"Rayman"],["Rayman Legends: Definitive Edition",1,"Rayman Legends"],["Rebel Transmute",0],
+ ["Resident Evil Triple Pack",0,"Resident Evil Revelations"],
+ ["Sacred 2 Remaster",0,"Sacred 2: Fallen Angel"],["Schim",1],["Sea of Stars",1],["Shin-chan: Shiro and the Coal Town",1],
+ ["Shovel Knight: Treasure Trove",0,"Shovel Knight"],["Signalis",0],["Silt",0,"Silt video game"],["Slay the Princess: The Pristine Cut",0,"Slay the Princess"],
+ ["Sonic Origins Plus",0,"Sonic Origins"],["Sonic Superstars",1],["Souldiers",0],["Spiritfarer",1],["Spyro Reignited Trilogy",0],
+ ["Stardew Valley",1],["Stay",0,"Stay 2021 video game"],["Super Mario Bros. Wonder",1],["Super Mario 3D All-Stars",0],
+ ["Super Mario 3D World + Bowser's Fury",0],["Super Mario Odyssey",0],["Super Mario RPG",0,"Super Mario RPG 2023"],["Super Mario Galaxy + Super Mario Galaxy 2",0,"Super Mario Galaxy"],
+ ["Teenage Mutant Ninja Turtles: The Cowabunga Collection",0],["TMNT: Splintered Fate",0,"Teenage Mutant Ninja Turtles: Splintered Fate"],
+ ["The Cub: Back to Earth Edition",0,"The Cub video game"],["The Messenger",0,"The Messenger 2018 video game"],["The Plucky Squire",0],
+ ["The Stanley Parable: Ultra Deluxe",0],["The Thing: Remastered",0],["Tiny Bookshop",0],["Tormented Souls",0],
+ ["Towa and the Guardians of the Sacred Tree",0],["Trek to Yomi",1],["Tunic",0,"Tunic video game"],
+ ["Ultros",0],["Windswept",0,"Windswept video game"],["Wonder Labyrinth",0],["Yoshi's Crafted World",1],
+ ["Zelda: Breath of the Wild",0,"The Legend of Zelda: Breath of the Wild"],["Zelda: Link's Awakening",0,"The Legend of Zelda: Link's Awakening 2019"]
+];
+
+const $=s=>document.querySelector(s);
+const KEY = "ludoteca-switch-v1", PREFKEY = "ludoteca-prefs", AUTHKEY = "ludoteca-key";
+let games = [], ui = {plat:"all", st:"all", q:"", sort:"az", cat:"all"}, prefs = {snd:true, crt:true};
+/* remote: hay servidor con base de datos (Vercel). Si no, todo funciona como antes, en este navegador */
+let remote = false, features = {}, editKey = "", emptyDb = false, dbMissing = false;
+try{editKey = localStorage.getItem(AUTHKEY) || ""}catch(e){}
+
+function uid(){return Math.random().toString(36).slice(2,10)}
+function seed(){
+  const mk=(p)=>([t,d,q],i)=>({id:uid(),title:t,platform:p,done:!!d,q:q||"",cover:"",meta:null,notes:"",rating:0,added:i});
+  return [...SEED_S2.map(mk("s2")),...SEED_S1.map(mk("s1"))];
+}
+function readLocal(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&Array.isArray(r.games))return r}catch(e){}return null}
+function loadPrefs(){try{const p=JSON.parse(localStorage.getItem(PREFKEY))||readLocal()?.prefs;if(p)prefs={...prefs,...p}}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREFKEY,JSON.stringify(prefs))}catch(e){}}
+function saveLocal(){if(remote)return;try{localStorage.setItem(KEY,JSON.stringify({games,prefs}))}catch(e){toast("⚠ El navegador no tiene espacio para guardar")}}
+function storeKey(){try{editKey?localStorage.setItem(AUTHKEY,editKey):localStorage.removeItem(AUTHKEY)}catch(e){}}
+
+/* ===== API (funciones de Vercel en /api) ===== */
+async function api(path,{method="GET",json,body,headers={}}={}){
+  const h={};if(editKey)h["x-ludoteca-key"]=editKey;Object.assign(h,headers);
+  if(json!==undefined){h["Content-Type"]="application/json";body=JSON.stringify(json)}
+  const r=await fetch("/api"+path,{method,headers:h,body});
+  const d=(r.headers.get("content-type")||"").includes("json")?await r.json().catch(()=>null):null;
+  if(!r.ok||!d){const e=new Error(d?.error||("HTTP "+r.status));e.status=r.status;e.data=d;throw e}
+  return d;
+}
+function setSync(s){const el=$("#sync");if(!el)return;el.className=s==="err"?"err":"";el.textContent=!remote?"":s==="saving"?"· ☁ guardando…":s==="err"?"· ⚠ sin guardar":"· ☁"}
+function saveErr(e){
+  if(e.status===401){editKey="";storeKey();updateMode();toast("🔑 La contraseña ya no es válida: vuelve a entrar")}
+  else toast("⚠ No se pudo guardar: "+e.message);
+  setSync("err");
+}
+// guarda un juego (en la nube si hay servidor y estás en modo edición; si no, en este navegador)
+const pend={};let needAll=false,uploading=null;
+function persist(g,delay=0){
+  if(!remote){saveLocal();return}
+  if(!editKey)return;
+  setSync("saving");
+  if(emptyDb){needAll=true;clearTimeout(pend.__all);pend.__all=setTimeout(()=>{delete pend.__all;uploadAll()},500);return}
+  clearTimeout(pend[g.id]);
+  pend[g.id]=setTimeout(()=>{delete pend[g.id];
+    api("/games?id="+encodeURIComponent(g.id),{method:"PUT",json:g}).then(()=>{if(!Object.keys(pend).length)setSync("ok")}).catch(saveErr)},delay);
+}
+// primera vez: la nube está vacía y se sube la lista entera (la de este navegador o la original)
+function uploadAll(){
+  needAll=true;
+  if(uploading)return uploading;
+  uploading=(async()=>{
+    try{while(needAll){needAll=false;await api("/games",{method:"POST",json:{games,replace:true}})}
+      const first=emptyDb;emptyDb=false;updateMode();setSync("ok");if(first)toast("☁ Lista subida a la nube: "+games.length+" juegos")}
+    catch(e){saveErr(e)}finally{uploading=null}
+  })();
+  return uploading;
+}
+async function removeGame(id){
+  games=games.filter(x=>x.id!==id);
+  if(!remote){saveLocal();return}
+  if(emptyDb){uploadAll();return}
+  try{await api("/games?id="+encodeURIComponent(id),{method:"DELETE"})}catch(e){saveErr(e)}
+}
+async function replaceAll(list){
+  games=list;
+  if(!remote){saveLocal();return}
+  emptyDb=false;needAll=true;await uploadAll();
+}
+
+/* ===== MODO EDICIÓN (contraseña) ===== */
+let authResolve=null;
+function canEdit(){if(!remote||editKey)return Promise.resolve(true);return askKey()}
+function askKey(){
+  return new Promise(res=>{authResolve=res;$("#authErr").textContent="";$("#authPw").value="";$("#authM").classList.add("open");SFX.open();setTimeout(()=>$("#authPw").focus(),50)});
+}
+$("#authForm").onsubmit=async e=>{
+  e.preventDefault();const k=$("#authPw").value;$("#authErr").textContent="Comprobando…";
+  try{await api("/auth",{method:"POST",headers:{"x-ludoteca-key":k}})}
+  catch(err){$("#authErr").textContent=err.status===401?"Contraseña incorrecta":err.message;SFX.undo();return}
+  editKey=k;storeKey();const r=authResolve;authResolve=null;closeModal($("#authM"));updateMode();SFX.add();toast("🔑 Modo edición activado");
+  if(emptyDb)uploadAll();
+  r&&r(true);
+};
+function updateMode(){
+  document.body.classList.toggle("ro",remote&&!editKey);
+  const info=$("#modeInfo"),kb=$("#keyBtn");
+  kb.style.display=remote?"":"none";kb.textContent=editKey?"🔒 SALIR DEL MODO EDICIÓN":"🔑 ENTRAR EN MODO EDICIÓN";
+  info.innerHTML=remote
+    ?`<b>☁ GUARDADO EN LA NUBE</b>Tus juegos se ven igual desde cualquier dispositivo. ${editKey?"Estás en <span style='color:var(--green)'>modo edición</span>.":"Ahora mismo solo puedes mirar: entra en modo edición para cambiar cosas."}<br>Portadas: ${features.igdb?"IGDB + Wikipedia":"Wikipedia (configura IGDB para mejores portadas)"} · Fotos: ${features.blob?"Vercel Blob":"dentro de la base de datos"}`
+    :`<b>💾 SOLO EN ESTE NAVEGADOR</b>${dbMissing?"El servidor está, pero falta conectar la base de datos (Upstash Redis) en Vercel. ":""}Los cambios se guardan aquí; exporta una copia de vez en cuando.`;
+  $("#foot").textContent=remote?"Portadas e info vía "+(features.igdb?"IGDB, ":"")+"Wikipedia / Wikidata · datos en la nube":"Portadas e info vía Wikipedia / Wikidata · tus datos se guardan en este navegador (exporta una copia desde ☰)";
+  const b=$("#banner");
+  if(remote&&emptyDb)b.innerHTML=`<span>☁ La nube está vacía. Sube esta lista (${games.length} juegos) para empezar a sincronizar.</span><button class="btn primary" id="upBtn">SUBIR LISTA</button>`;
+  else if(dbMissing)b.innerHTML=`<span>⚠ Falta conectar la base de datos en Vercel: de momento todo se guarda solo en este navegador.</span>`;
+  else b.innerHTML="";
+  setSync("ok");
+}
+
+/* ===== SONIDO 8-BIT ===== */
+let actx;
+function beep(notes,type="square",len=.08){
+  if(!prefs.snd)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    let t=actx.currentTime;
+    notes.forEach(f=>{const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;
+      g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+len);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+len);t+=len*.9});
+  }catch(e){}
+}
+const SFX={clear:()=>beep([523,659,784,1047,1319],"square",.09),undo:()=>beep([440,330,220],"triangle",.08),
+  click:()=>beep([880],"square",.03),open:()=>beep([330,660],"square",.05),add:()=>beep([392,523,659,784,1047,784,1047],"square",.07)};
+
+/* ===== FX ===== */
+function burst(x,y){
+  const cols=["#ffd23f","#3dff8f","#25c4ff","#ff3c5a","#a35bff"];
+  for(let i=0;i<26;i++){const p=document.createElement("div");p.className="px";p.style.background=cols[i%5];p.style.left=x+"px";p.style.top=y+"px";
+    document.body.appendChild(p);const a=Math.random()*Math.PI*2,v=60+Math.random()*120;
+    p.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${Math.cos(a)*v}px,${Math.sin(a)*v+60}px)`,opacity:0}],{duration:700+Math.random()*400,easing:"steps(10)"}).onfinish=()=>p.remove()}
+}
+let toastT;
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600)}
+
+/* ===== WIKIPEDIA / WIKIDATA ===== */
+const GAMEWORD=/\bgames?\b|videojuego|juego/i;
+async function wjson(url){
+  const r=await fetch(url,{headers:{"Api-User-Agent":"LudotecaDeLaTusa/1.0 (inventario personal)"}});
+  if(!r.ok)throw new Error(r.status);
+  const t=await r.text(); try{return JSON.parse(t)}catch(e){throw new Error("rate")} // si nos frenan devuelve texto plano
+}
+// ¿el resultado de búsqueda se parece de verdad al juego buscado?
+const STOP=new Set(["the","a","an","of","and","video","game","edition","de","la","el","los","las","y"]);
+const words=s=>norm(s).replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w.length>1&&!STOP.has(w)&&!/^(19|20)\d\d$/.test(w));
+function similar(term,title){const a=words(term),b=new Set(words(title));if(!a.length)return false;return a.filter(w=>b.has(w)).length/a.length>=.6}
+const WBASE="https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1"+
+  "&prop=pageimages|extracts|pageprops|langlinks|info|description&piprop=thumbnail&pithumbsize=600&pilicense=any&exintro=1&explaintext=1&exsentences=5&lllang=es&inprop=url";
+// la descripción corta de Wikipedia ("2025 video game") es la señal más fiable; si falta, se mira el texto
+const isGame=p=>p&&!p.missing&&!("disambiguation" in (p.pageprops||{}))&&!/^(List of|Lists of)/.test(p.title)&&
+  (p.description?/game/i.test(p.description)&&!/(console|company|developer|character|list)/i.test(p.description):/\bgames?\b/i.test(p.extract||""));
+async function fetchMeta(g){
+  const term=(g.q||g.title);
+  // 1) títulos exactos ("X (video game)" y "X"), 2) búsqueda; solo vale una página que hable de un videojuego
+  let page=null;
+  const d1=await wjson(WBASE+"&titles="+encodeURIComponent(term+" (video game)|"+term));
+  const ps=Object.values(d1.query?.pages||{});
+  page=ps.find(p=>/\(video game\)$/.test(p.title)&&isGame(p))||ps.find(isGame)||null;
+  if(!page){
+    const d=await wjson(WBASE+"&generator=search&gsrlimit=6&exlimit=6&gsrsearch="+encodeURIComponent(term+" video game"));
+    page=Object.values(d.query?.pages||{}).sort((a,b)=>a.index-b.index).find(p=>isGame(p)&&(similar(term,p.title)||similar(g.title,p.title)))||null;
+  }
+  if(!page) return {notFound:true,v4:true};
+  const meta={v4:true,wiki:page.fullurl,wikiTitle:page.title,img:page.thumbnail?.source||"",desc:page.extract||"",lang:"en"};
+  // descripción en español si existe
+  const es=page.langlinks?.[0]?.["*"];
+  if(es){try{
+    const d=await wjson("https://es.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=5&titles="+encodeURIComponent(es));
+    const p=Object.values(d.query?.pages||{})[0]; if(p?.extract){meta.desc=p.extract;meta.lang="es";meta.wikiEs=p.fullurl}
+  }catch(e){}}
+  // ficha técnica desde Wikidata
+  const qid=page.pageprops?.wikibase_item;
+  if(qid){try{
+    const d=await wjson(`https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=claims&ids=${qid}`);
+    const c=d.entities[qid].claims||{};
+    const ids=k=>(c[k]||[]).map(s=>s.mainsnak?.datavalue?.value?.id).filter(Boolean).slice(0,4);
+    const props={dev:ids("P178"),pub:ids("P123"),genre:ids("P136"),series:ids("P179"),mode:ids("P404")};
+    const dates=(c.P577||[]).map(s=>s.mainsnak?.datavalue?.value?.time).filter(Boolean).sort();
+    if(dates[0]) meta.date=dates[0].slice(1,11).replace(/-00/g,"");
+    const all=[...new Set(Object.values(props).flat())];
+    if(all.length){
+      const L=await wjson(`https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=labels&languages=es|en&ids=${all.join("|")}`);
+      const lab=id=>L.entities[id]?.labels?.es?.value||L.entities[id]?.labels?.en?.value||"";
+      for(const k in props) meta[k]=props[k].map(lab).filter(Boolean).join(", ");
+    }
+  }catch(e){}}
+  return meta;
+}
+// candidatos de Wikipedia (cuando no hay IGDB)
+async function wikiSearch(term){
+  const d=await wjson(WBASE+"&generator=search&gsrlimit=10&exlimit=10&gsrsearch="+encodeURIComponent(term+" video game"));
+  return Object.values(d.query?.pages||{}).sort((a,b)=>a.index-b.index).filter(isGame).map(p=>({
+    name:p.title.replace(/\s*\((\d{4} )?video game\)$/,""),year:(p.description||"").match(/\b(19|20)\d\d\b/)?.[0]||"",
+    platforms:[],switch:false,cover:p.thumbnail?.source||"",wikiTitle:p.title}));
+}
+// candidatos de IGDB vía /api/search (solo en modo edición)
+const useIgdb=()=>remote&&features.igdb&&editKey;
+async function igdbSearch(term){return (await api("/search?q="+encodeURIComponent(term))).results||[]}
+async function searchGames(term){
+  if(useIgdb()){try{return {src:"IGDB",results:await igdbSearch(term)}}catch(e){if(e.status===401)saveErr(e)}}
+  return {src:"Wikipedia",results:await wikiSearch(term)};
+}
+function bestMatch(g,list){
+  const ts=[g.q||g.title,g.title],ok=r=>ts.some(t=>similar(t,r.name));
+  return list.find(r=>r.switch&&ok(r))||list.find(ok)||null;
+}
+// aplica un candidato elegido de la lista a un juego
+function applyPick(g,c){
+  g.cover="";
+  if(c.meta){g.meta={...c.meta,name:c.name};g.q=""}
+  else{g.meta=null;g.q=c.wikiTitle||c.name}
+}
+// juego elegido en IGDB: se completa con la descripción en español de Wikipedia si existe
+async function enrichEs(g){
+  const m=g.meta, w=await fetchMeta({title:g.title,q:m.name||g.q||g.title});
+  m.esTried=true;
+  if(!w.notFound){if(w.lang==="es"){m.desc=w.desc;m.lang="es"}Object.assign(m,{wiki:w.wiki,wikiEs:w.wikiEs,wikiTitle:w.wikiTitle});if(!m.img&&w.img)m.img=w.img}
+}
+async function resolveMeta(g){
+  if(useIgdb()){try{const b=bestMatch(g,await igdbSearch(g.q||g.title));if(b)return {...b.meta,name:b.name}}catch(e){if(e.status===401)saveErr(e)}}
+  return fetchMeta(g);
+}
+// Wikipedia limita las peticiones en paralelo: cola de uno en uno, con reintento si nos frena
+let queue=[],busy=false,tries={},current="";
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function enqueue(g,force){ if(force){g.meta=null;tries[g.id]=0} if(!queue.includes(g.id))queue.push(g.id); pump() }
+async function pump(){
+  if(busy)return; busy=true;
+  while(queue.length){
+    const id=queue.shift(), g=games.find(x=>x.id===id); if(!g)continue; current=id;
+    const enrich=g.meta?.src==="igdb"&&!g.meta.esTried;
+    if(!enrich)setLoading(id,true);
+    try{if(enrich)await enrichEs(g); else g.meta=await resolveMeta(g)}
+    catch(e){
+      tries[id]=(tries[id]||0)+1;
+      if(tries[id]<4){queue.push(id);await sleep(6000*tries[id]);continue}
+      if(enrich)g.meta.esTried=true;
+      setLoading(id,false);continue; // sin caché: se reintenta al volver a abrir
+    }
+    persist(g); refreshCard(g); renderCatsSoon(); if(openId===g.id)renderFicha(g);
+    await sleep(900);
+  }
+  busy=false; current="";
+}
+
+/* ===== FOTOS PROPIAS ===== */
+function shrink(file,max=700){
+  return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");
+      c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+      c.toBlob(b=>b?res(b):rej(new Error("No se pudo procesar la imagen")),"image/jpeg",.82)};
+    img.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("Imagen no válida"))};img.src=u});
+}
+const toDataURL=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+async function uploadPhoto(file){
+  if(remote&&features.blob){const b=await shrink(file);return (await api("/upload",{method:"POST",body:b,headers:{"Content-Type":"application/octet-stream"}})).url}
+  return toDataURL(await shrink(file,480)); // sin almacenamiento de imágenes: va dentro de los datos, más pequeña
+}
+
+/* ===== BUSCADOR CON PORTADAS ===== */
+function pickerHTML(src,list){
+  if(!list.length)return `<div class="pk-msg">SIN RESULTADOS · prueba con el nombre en inglés</div>`;
+  return list.map((c,i)=>`<button type="button" class="pk" data-pick="${i}">
+    <span class="pk-img" style="${c.cover?`background-image:url('${c.cover.replace(/'/g,"%27")}')`:""}">${c.cover?"":"?"}</span>
+    <span class="pk-t"><b>${esc(c.name)}${c.switch?'<span class="pk-sw">SWITCH</span>':""}</b><small>${esc([c.year,c.platforms.join(" · ")].filter(Boolean).join(" · ")||"—")}</small></span></button>`).join("")
+    +`<div class="pk-msg">VÍA ${esc(src.toUpperCase())}</div>`;
+}
+function picker(box,onPick){
+  let seq=0,timer,results=[];
+  box.onclick=e=>{const b=e.target.closest("[data-pick]");if(b){SFX.click();onPick(results[+b.dataset.pick])}};
+  const run=async term=>{
+    term=term.trim();if(term.length<3){seq++;box.innerHTML="";return}
+    const my=++seq;box.innerHTML=`<div class="pk-msg">BUSCANDO…</div>`;
+    let r;try{r=await searchGames(term)}catch(e){r={src:"",results:[]}}
+    if(my!==seq)return;results=r.results;box.innerHTML=pickerHTML(r.src,results);
+  };
+  return {search(t,now){clearTimeout(timer);timer=setTimeout(()=>run(t),now?0:450)},clear(){seq++;clearTimeout(timer);box.innerHTML=""}};
+}
+function chosenHTML(c,onlyPhoto){
+  if(onlyPhoto)return "";
+  return `<span class="pk-img" style="${c.cover?`background-image:url('${c.cover.replace(/'/g,"%27")}')`:""}"></span><span>✓ ${esc(c.name)}${c.year?` (${c.year})`:""}</span><button type="button" class="btn" id="unpick">QUITAR</button>`;
+}
+
+/* ===== RENDER ===== */
+function hue(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h}
+const GLYPHS=["★","♥","♦","♣","♠","☾","☀","⚔","✿","♪","☠","⚡"];
+function coverOf(g){return g.cover||g.meta?.img||""}
+function caseHTML(g){
+  const img=coverOf(g), h=hue(g.title);
+  const art=img?`<div class="art" style="background-image:url('${img.replace(/'/g,"%27")}')"></div>`
+    :`<div class="fallback" style="background:linear-gradient(160deg,hsl(${h} 70% 45%),hsl(${(h+60)%360} 70% 22%))"><span class="glyph">${GLYPHS[h%GLYPHS.length]}</span><span style="position:relative">${esc(g.title)}</span></div>`;
+  return `<div class="case ${g.platform}"><div class="band">${g.platform==="s2"?"NINTENDO SWITCH 2":"NINTENDO SWITCH"}</div>${art}<div class="shine"></div></div>`;
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s){return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()}
+function sortKey(t){return norm(t).replace(/^(the|a)\s+/,"").replace(/[^a-z0-9]/g,"")}
+
+/* ===== CATEGORÍAS =====  se deducen del género (IGDB o Wikidata, por orden de prioridad) y se pueden cambiar a mano */
+const CAT_RULES=[
+  ["Terror","☠",/horror|terror/],
+  ["Metroidvania","🗝",/metroidvania/],
+  ["Soulslike","⚔",/soulslike|souls-like/],
+  ["Roguelike","🎲",/roguelike|roguelite|rogue-lite|mazmorras|dungeon/],
+  ["Cozy / Simulación","🌱",/simulaci|simulat|granja|farm|vida|life sim|construcci|gesti|cozy|social/],
+  ["RPG","🛡",/\brol\b|role-playing|rpg/],
+  ["Plataformas","🍄",/plataforma|platform/],
+  ["Puzles","🧩",/rompecabezas|puzle|puzzle|logic/],
+  ["Narrativa","📖",/novela visual|visual novel|aventura gr|point-and-click|point and click|narrativ|walking|interactive (fiction|movie)|ficción interactiva/],
+  ["Estrategia","♟",/strateg|estrategia|tactic|tbs|rts/],
+  ["Acción / Arcade","💥",/shoot|disparos|matamarcianos|lucha|fighting|beat|hack and slash|arcade|run and gun|acción|action|carreras|racing|conducci|driving|party|fiesta|ritmo|rhythm|music/],
+  ["Aventura","🧭",/aventura|adventure|mundo abierto|open world|sigilo|stealth/],
+];
+const CAT_ICON=Object.fromEntries(CAT_RULES.map(r=>[r[0],r[1]]));
+const NOCAT="Sin categoría";
+function autoCat(g){const s=norm(g.meta?.genre||"");if(!s)return "";for(const[n,,re]of CAT_RULES)if(re.test(s))return n;return "Otros"}
+function categoryOf(g){return g.cat||autoCat(g)||NOCAT}
+function catIcon(c){return CAT_ICON[c]||(c===NOCAT?"…":"★")}
+function allCats(){
+  const m={};games.forEach(g=>{const c=categoryOf(g);m[c]=(m[c]||0)+1});
+  const order=CAT_RULES.map(r=>r[0]);
+  return Object.entries(m).sort((a,b)=>{const ia=order.indexOf(a[0]),ib=order.indexOf(b[0]);
+    if(a[0]===NOCAT)return 1;if(b[0]===NOCAT)return -1;return (ia<0?99:ia)-(ib<0?99:ib)||a[0].localeCompare(b[0])});
+}
+function renderCats(){
+  const cats=allCats();
+  if(ui.cat!=="all"&&!cats.some(c=>c[0]===ui.cat))ui.cat="all";
+  $("#cats").innerHTML=`<button class="chip ${ui.cat==="all"?"on":""}" data-cat="all">🎮 Todas <em>${games.length}</em></button>`+
+    cats.map(([c,n])=>`<button class="chip ${ui.cat===c?"on":""}" data-cat="${esc(c)}">${catIcon(c)} ${esc(c)} <em>${n}</em></button>`).join("");
+  const box=$("#cats"),on=box.querySelector(".chip.on");
+  if(on&&ui.cat!=="all")box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;
+  $("#catList").innerHTML=[...new Set([...CAT_RULES.map(r=>r[0]),...cats.map(c=>c[0]).filter(c=>c!==NOCAT)])].map(c=>`<option value="${esc(c)}">`).join("");
+}
+let catT;function renderCatsSoon(){clearTimeout(catT);catT=setTimeout(renderCats,400)}
+
+function filtered(){
+  let l=games.filter(g=>(ui.plat==="all"||g.platform===ui.plat)&&(ui.st==="all"||(ui.st==="done")===g.done)&&(ui.cat==="all"||categoryOf(g)===ui.cat)&&(!ui.q||norm(g.title).includes(norm(ui.q))));
+  const az=(a,b)=>sortKey(a.title).localeCompare(sortKey(b.title));
+  if(ui.sort==="az"||ui.sort==="cat")l.sort(az); else if(ui.sort==="za")l.sort((a,b)=>az(b,a));
+  else if(ui.sort==="recent")l.sort((a,b)=>(b.added||0)-(a.added||0)); else l.sort((a,b)=>(b.rating-a.rating)||az(a,b));
+  return l;
+}
+function cardHTML(g,i){
+  const loading=!g.cover&&!g.meta&&queue.concat(current).includes(g.id);
+  return `<div class="card ${g.done?"done":""} ${loading?"loading":""}" data-id="${g.id}" style="animation-delay:${Math.min(i,30)*18}ms">
+    <button class="chk ${g.done?"on":""}" data-chk="${g.id}" title="Marcar como pasado"></button>
+    ${caseHTML(g)}
+    <div class="title">${esc(g.title)}</div>
+    ${g.rating?`<div class="stars">${"★".repeat(g.rating)}</div>`:""}
+  </div>`;
+}
+function render(){
+  const l=filtered(), m=$("#main");
+  if(!l.length){m.innerHTML=`<div class="empty">NO HAY CARTUCHOS AQUÍ<br>▼ GAME OVER ▼</div>`;renderStats();renderCats();return}
+  let html="";
+  if(ui.sort==="cat"){
+    let i=0;
+    allCats().forEach(([c])=>{const sub=l.filter(g=>categoryOf(g)===c);if(!sub.length)return;
+      html+=`<div class="letter"><span class="ico">${catIcon(c)}</span>${esc(c).toUpperCase()} <span style="color:var(--mute)">${sub.filter(g=>g.done).length}/${sub.length}</span></div><div class="grid">${sub.map(g=>cardHTML(g,i++)).join("")}</div>`});
+  } else if(ui.sort==="az"||ui.sort==="za"){
+    let cur=null,buf=[];
+    const flush=()=>{if(buf.length)html+=`<div class="letter">${cur}</div><div class="grid">${buf.join("")}</div>`;buf=[]};
+    l.forEach((g,i)=>{const L=(sortKey(g.title)[0]||"#").toUpperCase(),k=/[A-Z]/.test(L)?L:"#";if(k!==cur){flush();cur=k}buf.push(cardHTML(g,i))});flush();
+  } else html=`<div class="grid">${l.map(cardHTML).join("")}</div>`;
+  m.innerHTML=html; renderStats(); renderCats(); bindTilt();
+}
+function refreshCard(g){
+  const el=document.querySelector(`.card[data-id="${g.id}"]`); if(!el)return;
+  const tmp=document.createElement("div"); tmp.innerHTML=cardHTML(g,0); const n=tmp.firstElementChild; n.style.animation="none"; el.replaceWith(n); bindTilt(n);
+}
+function setLoading(id,on){document.querySelector(`.card[data-id="${id}"]`)?.classList.toggle("loading",on)}
+function renderStats(){
+  const t=games.length,d=games.filter(g=>g.done).length,s2=games.filter(g=>g.platform==="s2"),s1=games.filter(g=>g.platform==="s1");
+  const pct=t?Math.round(d/t*100):0, lvl=Math.floor(d/5)+1;
+  $("#stats").innerHTML=`
+    <div class="stat"><span>CARTUCHOS</span><b>${t}</b></div>
+    <div class="stat" style="border-color:#000;box-shadow:4px 4px 0 var(--s2)"><span>SWITCH 2</span><b style="color:var(--s2)">${s2.filter(g=>g.done).length}/${s2.length}</b></div>
+    <div class="stat" style="box-shadow:4px 4px 0 var(--s1)"><span>SWITCH</span><b style="color:var(--s1)">${s1.filter(g=>g.done).length}/${s1.length}</b></div>
+    <div class="stat xp"><span>NIVEL ${lvl} · COMPLETADO ${pct}%</span><b style="color:var(--green)">${d} CLEAR</b><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+}
+function bindTilt(scope){
+  (scope?[scope]:document.querySelectorAll(".card")).forEach(c=>{
+    const cs=c.querySelector(".case");
+    c.onmousemove=e=>{const r=cs.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;cs.style.transform=`rotateY(${x*18}deg) rotateX(${-y*18}deg) translateY(-6px)`};
+    c.onmouseleave=()=>cs.style.transform="";
+  });
+}
+
+/* ===== FICHA ===== */
+let openId=null,fichaPicker=null;
+function openFicha(id){const g=games.find(x=>x.id===id);if(!g)return;openId=id;renderFicha(g);$("#ficha").classList.add("open");SFX.open();
+  if(!g.meta&&!g.cover)enqueue(g); else if(g.meta?.src==="igdb"&&!g.meta.esTried)enqueue(g)}
+function renderFicha(g){
+  const m=g.meta||{}, ro=remote&&!editKey;
+  const rows=[["DESARROLLA",m.dev],["DISTRIBUYE",m.pub],["LANZAMIENTO",m.date&&fmtDate(m.date)],["GÉNERO",m.genre],["SAGA",m.series],["MODOS",m.mode]].filter(r=>r[1]);
+  const desc=!g.meta?(queue.concat(current).includes(g.id)?"Cargando información…":"Wikipedia no responde ahora mismo. Se reintentará sola la próxima vez que abras la página (o usa ☰ → Recargar portadas)."):m.notFound||m.error?"No he encontrado información automática para este juego. Usa «Buscar otra portada» abajo y elige el juego correcto de la lista.":esc(m.desc||"Sin descripción.");
+  const links=[m.wiki&&`<a href="${esc(m.wikiEs||m.wiki)}" target="_blank" rel="noopener">→ Wikipedia (${esc(m.wikiTitle)})</a>`,m.igdbUrl&&`<a href="${esc(m.igdbUrl)}" target="_blank" rel="noopener">→ IGDB</a>`].filter(Boolean);
+  $("#fichaSheet").innerHTML=`<button class="btn x" data-close>✕</button>
+  <div class="ficha">
+    <div class="cv">${caseHTML(g)}${g.done?'<div style="text-align:center;margin-top:16px" class="pix"><span class="tag ok">★ COMPLETADO ★</span></div>':""}</div>
+    <div>
+      <span class="tag ${g.platform}">${g.platform==="s2"?"SWITCH 2":"SWITCH"}</span>${g.done?'<span class="tag ok">✓ PASADO</span>':'<span class="tag">PENDIENTE</span>'}<span class="tag" style="background:var(--purple);color:#fff">${catIcon(categoryOf(g))} ${esc(categoryOf(g)).toUpperCase()}</span>
+      <h2>${esc(g.title)}</h2>
+      ${rows.length?`<dl class="dl">${rows.map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>`:""}
+      <div class="desc">${desc}</div>
+      ${links.length?`<div class="row" style="font-size:18px;gap:18px">${links.join("")}</div>`:""}
+      <div class="row">
+        <button class="btn ${g.done?"":"primary"}" data-toggle="${g.id}">${g.done?"↺ MARCAR PENDIENTE":"✓ ¡ME LO HE PASADO!"}</button>
+        <div class="rate">${[1,2,3,4,5].map(n=>`<button data-rate="${n}" class="${n<=g.rating?"on":""}" title="${n} estrellas">★</button>`).join("")}</div>
+      </div>
+      <div class="field"><label>MIS NOTAS</label><textarea id="notes" rows="3" ${ro?"readonly":""} placeholder="${ro?"Entra en modo edición (☰) para escribir notas":"Horas, final, logros, qué te pareció..."}">${esc(g.notes)}</textarea></div>
+      <details id="editBox"><summary>EDITAR / CORREGIR</summary>
+        <div class="field"><label>¿PORTADA O FICHA EQUIVOCADA? BUSCA EL JUEGO CORRECTO</label><input id="ePick" value="${esc(m.name||g.q||g.title)}" placeholder="Nombre del juego (en inglés suele ir mejor)"></div>
+        <div class="picker" id="ePicker"></div>
+        <label class="photo"><span class="btn">📷 SUBIR FOTO PROPIA</span><input type="file" id="ePhoto" accept="image/*">${g.cover?'<button type="button" class="btn" id="eNoPhoto">QUITAR FOTO/URL</button>':""}</label>
+        <div class="field"><label>TÍTULO</label><input id="eTitle" value="${esc(g.title)}"></div>
+        <div class="field"><label>PLATAFORMA</label><select id="ePlat"><option value="s2" ${g.platform==="s2"?"selected":""}>Nintendo Switch 2</option><option value="s1" ${g.platform==="s1"?"selected":""}>Nintendo Switch</option></select></div>
+        <div class="field"><label>CATEGORÍA (elige una o escribe la tuya)</label><input id="eCat" list="catList" value="${esc(g.cat)}" placeholder="${esc(autoCat(g)||NOCAT)} (automática)"></div>
+        <div class="field"><label>TÉRMINO DE BÚSQUEDA AUTOMÁTICA</label><input id="eQ" value="${esc(g.q)}" placeholder="${esc(g.title)}"></div>
+        <div class="field"><label>URL DE PORTADA PERSONALIZADA</label><input id="eCover" value="${esc(g.cover.startsWith("data:")?"":g.cover)}" placeholder="${g.cover.startsWith("data:")?"(foto propia guardada)":"Pega aquí la URL de una imagen"}"></div>
+        <div class="row"><button class="btn primary" id="eSave">GUARDAR</button><button class="btn danger" id="eDel">🗑 ELIMINAR</button></div>
+      </details>
+    </div>
+  </div>`;
+  fichaPicker=picker($("#ePicker"),async c=>{
+    if(!await canEdit())return;
+    applyPick(g,c);fichaPicker.clear();persist(g);render();renderFicha(g);toast("Portada cambiada: "+c.name);
+    if(!g.meta)enqueue(g); else if(!g.meta.esTried)enqueue(g);
+  });
+  $("#editBox").ontoggle=e=>{if(e.target.open)fichaPicker.search($("#ePick").value,true)};
+  $("#ePick").oninput=e=>fichaPicker.search(e.target.value);
+}
+function fmtDate(s){const p=s.split("-");const M=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];return p.length===3?`${+p[2]} ${M[+p[1]-1]} ${p[0]}`:p.length===2?`${M[+p[1]-1]} ${p[0]}`:p[0]}
+
+async function toggleDone(id,ev){
+  if(!await canEdit())return;
+  const g=games.find(x=>x.id===id);g.done=!g.done;persist(g);
+  if(g.done){SFX.clear();toast("★ STAGE CLEAR! ★ "+g.title);if(ev)burst(ev.clientX,ev.clientY)}else{SFX.undo();toast("Vuelve a la lista de pendientes")}
+  if(ui.st!=="all")render(); else {refreshCard(g);renderStats()}
+  if(openId===id)renderFicha(g);
+}
+
+/* ===== EVENTOS ===== */
+document.addEventListener("click",async e=>{
+  const t=e.target;
+  if(t.closest("[data-close]")||t.classList.contains("modal")){closeModal(t.closest(".modal"));return}
+  const chk=t.closest("[data-chk]");if(chk){e.stopPropagation();toggleDone(chk.dataset.chk,{clientX:e.clientX,clientY:e.clientY});return}
+  const tg=t.closest("[data-toggle]");if(tg){toggleDone(tg.dataset.toggle,{clientX:e.clientX,clientY:e.clientY});return}
+  const rt=t.closest("[data-rate]");if(rt){const id=openId;if(!await canEdit())return;const g=games.find(x=>x.id===id);const n=+rt.dataset.rate;g.rating=g.rating===n?0:n;persist(g);SFX.click();renderFicha(g);refreshCard(g);return}
+  const ch=t.closest("[data-cat]");if(ch){ui.cat=ch.dataset.cat;SFX.click();render();return}
+  const card=t.closest(".card");if(card&&!t.closest(".sheet")){openFicha(card.dataset.id);return}
+  if(t.id==="upBtn"){if(await canEdit())uploadAll();return}
+  if(t.id==="unpick"){addPick=null;$("#addChosen").innerHTML="";$("#addTitle").focus();return}
+  if(t.id==="eNoPhoto"){const id=openId;if(!await canEdit())return;const g=games.find(x=>x.id===id);g.cover="";persist(g);render();renderFicha(g);if(!g.meta)enqueue(g);toast("Foto quitada");return}
+  if(t.id==="eSave"){const id=openId;if(!await canEdit())return;const g=games.find(x=>x.id===id);
+    const nt=$("#eTitle").value.trim()||g.title,nq=$("#eQ").value.trim(),ncv=$("#eCover").value.trim(),np=$("#ePlat").value,ncat=$("#eCat").value.trim();
+    const nc=ncv||(g.cover.startsWith("data:")?g.cover:"");
+    const research=nq!==g.q||(nt!==g.title&&g.meta?.src!=="igdb");
+    Object.assign(g,{title:nt,q:nq,cover:nc,platform:np,cat:ncat===autoCat(g)?"":ncat});persist(g);render();if(research)enqueue(g,true);renderFicha(g);toast("Guardado");SFX.click();return}
+  if(t.id==="eDel"){const id=openId;if(!await canEdit())return;const g=games.find(x=>x.id===id);if(confirm(`¿Eliminar "${g.title}" de tu ludoteca?`)){closeAll();await removeGame(id);render();toast("Cartucho eliminado")}return}
+});
+document.addEventListener("change",async e=>{
+  if(e.target.id!=="ePhoto")return;
+  const f=e.target.files[0],id=openId;if(!f)return;
+  if(!await canEdit())return;
+  const g=games.find(x=>x.id===id);toast("Subiendo foto…");
+  try{g.cover=await uploadPhoto(f);persist(g);refreshCard(g);if(openId===id)renderFicha(g);toast("📷 Foto guardada");SFX.add()}
+  catch(err){toast("⚠ "+err.message)}
+});
+document.addEventListener("input",e=>{if(e.target.id==="notes"){const g=games.find(x=>x.id===openId);if(remote&&!editKey)return;g.notes=e.target.value;persist(g,800)}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const o=[...document.querySelectorAll(".modal.open")].pop();if(o)closeModal(o)}});
+function closeModal(m){
+  if(!m)return;m.classList.remove("open");
+  if(m.id==="ficha")openId=null;
+  if(m.id==="formM")addPicker?.clear();
+  if(m.id==="authM"&&authResolve){const r=authResolve;authResolve=null;r(false)}
+}
+function closeAll(){document.querySelectorAll(".modal.open").forEach(closeModal)}
+
+function seg(id,key){document.querySelectorAll(`#${id} button`).forEach(b=>b.onclick=()=>{document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.remove("on"));b.classList.add("on");ui[key]=b.dataset.v;SFX.click();render()})}
+seg("platSeg","plat");seg("stateSeg","st");
+$("#q").oninput=e=>{ui.q=e.target.value;render()};
+$("#sort").onchange=e=>{ui.sort=e.target.value;render()};
+
+/* --- añadir juego: escribes, eliges de la lista y aparece con su portada --- */
+let addPick=null,addPicker=null;
+addPicker=picker($("#addPicker"),c=>{addPick=c;$("#addTitle").value=c.name;$("#addChosen").innerHTML=chosenHTML(c);addPicker.clear()});
+$("#addTitle").oninput=e=>{if(addPick){addPick=null;$("#addChosen").innerHTML=""}addPicker.search(e.target.value)};
+$("#addPhoto").onchange=e=>{const f=e.target.files[0];$("#addPhotoName").textContent=f?"✓ "+f.name:"opcional: una foto de tu caja sustituye a la portada"};
+$("#addBtn").onclick=async()=>{
+  if(!await canEdit())return;
+  $("#addForm").reset();addPick=null;$("#addChosen").innerHTML="";addPicker.clear();$("#addPhoto").onchange({target:$("#addPhoto")});
+  $("#addForm [name=platform]").value=ui.plat==="s1"?"s1":"s2";$("#formM").classList.add("open");SFX.open();setTimeout(()=>$("#addTitle").focus(),50)};
+$("#addForm").onsubmit=async e=>{
+  e.preventDefault();const f=new FormData(e.target),btn=$("#addSubmit");
+  const g={id:uid(),title:f.get("title").trim(),platform:f.get("platform"),done:!!f.get("done"),q:f.get("q").trim(),cover:f.get("cover").trim(),cat:f.get("cat").trim(),meta:null,notes:"",rating:0,added:Date.now()};
+  if(addPick){const t=g.title,manualQ=g.q;applyPick(g,addPick);g.title=t;if(manualQ&&!g.meta)g.q=manualQ;if(f.get("cover").trim())g.cover=f.get("cover").trim()}
+  const photo=f.get("photo");
+  if(photo&&photo.size){btn.disabled=true;btn.textContent="SUBIENDO…";
+    try{g.cover=await uploadPhoto(photo)}catch(err){toast("⚠ Foto: "+err.message)}
+    btn.disabled=false;btn.textContent="GUARDAR"}
+  games.push(g);persist(g);closeAll();render();
+  if(!g.meta)enqueue(g);
+  SFX.add();toast("¡Nuevo cartucho! "+g.title);
+};
+
+/* --- menú --- */
+$("#menuBtn").onclick=()=>{$("#menuM").classList.add("open");syncPrefBtns();updateMode();SFX.open()};
+$("#keyBtn").onclick=async()=>{if(editKey){editKey="";storeKey();updateMode();toast("🔒 Modo edición cerrado")}else{await askKey()}};
+$("#expBtn").onclick=()=>{const b=new Blob([JSON.stringify({games,prefs},null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ludoteca-de-la-tusa-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Copia exportada")};
+$("#impBtn").onclick=async()=>{if(await canEdit())$("#impFile").click()};
+$("#impFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.games))throw 0;
+  if(remote&&!confirm(`Esto sustituye la lista de la nube por la de la copia (${d.games.length} juegos). ¿Seguro?`))return;
+  prefs={...prefs,...(d.prefs||{})};savePrefs();applyPrefs();await replaceAll(d.games);render();closeAll();toast("Copia importada: "+games.length+" juegos");kick()}catch(err){toast("Archivo no válido")}};
+$("#refetchBtn").onclick=()=>{games.filter(g=>!coverOf(g)).forEach(g=>enqueue(g,true));closeAll();render();toast("Buscando portadas…")};
+$("#sndBtn").onclick=()=>{prefs.snd=!prefs.snd;savePrefs();saveLocal();syncPrefBtns();SFX.click()};
+$("#crtBtn").onclick=()=>{prefs.crt=!prefs.crt;savePrefs();saveLocal();applyPrefs();syncPrefBtns()};
+$("#resetBtn").onclick=async()=>{if(!await canEdit())return;if(confirm("Esto borra tus cambios (marcas, notas y juegos añadidos) y vuelve a la lista original"+(remote?" EN LA NUBE":"")+". ¿Seguro?")){closeAll();await replaceAll(seed());render();kick();toast("Lista restaurada")}};
+function syncPrefBtns(){$("#sndBtn").textContent="♪ SONIDO: "+(prefs.snd?"ON":"OFF");$("#crtBtn").textContent="▤ EFECTO CRT: "+(prefs.crt?"ON":"OFF")}
+function applyPrefs(){document.body.classList.toggle("nocrt",!prefs.crt)}
+function kick(){games.filter(g=>!g.meta&&!g.cover).forEach(g=>enqueue(g))}
+
+// al volver a la pestaña, se traen los cambios hechos desde otro dispositivo
+let lastSync=Date.now();
+window.addEventListener("focus",async()=>{
+  if(!remote||emptyDb||Date.now()-lastSync<15000||document.querySelector(".modal.open")||Object.keys(pend).length||uploading)return;
+  lastSync=Date.now();
+  try{const d=await api("/games");if(d.games.length){games=d.games;render()}}catch(e){}
+});
+
+/* ===== INICIO ===== */
+const boot=$("#boot");const startUp=()=>{boot.style.opacity=0;setTimeout(()=>boot.remove(),500);SFX.add()};
+boot.onclick=startUp;setTimeout(()=>boot.isConnected&&(boot.style.opacity=0,setTimeout(()=>boot.remove(),500)),1600);
+(async function init(){
+  loadPrefs();applyPrefs();
+  let d=null;
+  try{d=await api("/games")}catch(e){if(e.data?.features){features=e.data.features;dbMissing=true}}
+  if(d&&Array.isArray(d.games)){
+    remote=true;features=d.features||{};
+    if(d.games.length)games=d.games;
+    else{const l=readLocal();games=l?.games?.length?l.games:seed();emptyDb=true}
+  }else{const l=readLocal();games=l?l.games:seed()}
+  // fichas antiguas que apuntaban a una página que no es de videojuego (película, cómic…): se vuelven a buscar
+  games.forEach(g=>{g.cover=g.cover||"";const m=g.meta;if(m&&!m.v4&&(m.v2||m.v3||m.notFound||!GAMEWORD.test(m.desc||"")))g.meta=null});
+  render();updateMode();kick();
+})();
+</script>
+</body>
+</html>
