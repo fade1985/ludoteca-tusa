@@ -335,7 +335,7 @@ footer{text-align:center;color:var(--mute);padding:24px 16px 40px;font-size:18px
     <div class="info" id="modeInfo"></div>
     <div class="row" style="flex-direction:column;align-items:stretch">
       <button class="btn" id="keyBtn">🔑 MODO EDICIÓN</button>
-      <button class="btn" id="expBtn">⬇ EXPORTAR COPIA (.json)</button>
+      <button class="btn" id="expBtn">⬇ EXPORTAR COPIA (.json, con fotos)</button>
       <button class="btn" id="impBtn">⬆ IMPORTAR COPIA</button>
       <button class="btn primary" id="revBtn">🖼 REVISAR PORTADAS</button>
       <button class="btn" id="refetchBtn">↻ RECARGAR PORTADAS QUE FALTAN</button>
@@ -1022,10 +1022,19 @@ $("#redoBtn").onclick=async()=>{
 /* --- menú --- */
 $("#menuBtn").onclick=()=>{$("#menuM").classList.add("open");syncPrefBtns();updateMode();SFX.open()};
 $("#keyBtn").onclick=async()=>{if(editKey){editKey="";storeKey();updateMode();toast("🔒 Modo edición cerrado")}else{await askKey()}};
-$("#expBtn").onclick=()=>{const b=new Blob([JSON.stringify({games,prefs},null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ludoteca-de-la-tusa-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Copia exportada")};
+/* las fotos subidas a Vercel Blob se meten dentro del .json para que la copia no dependa de Vercel */
+$("#expBtn").onclick=async()=>{
+  const out=games.map(g=>({...g})),hosted=out.filter(g=>/blob\.vercel/.test(g.cover||""));let fail=0;
+  if(hosted.length)toast("Preparando copia con "+hosted.length+" fotos…");
+  await Promise.all(hosted.map(async g=>{try{const r=await fetch(g.cover);if(!r.ok)throw 0;g.cover=await toDataURL(await r.blob())}catch(e){fail++}}));
+  const b=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),games:out,prefs},null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ludoteca-de-la-tusa-"+new Date().toISOString().slice(0,10)+".json";a.click();
+  toast(fail?`Copia exportada (⚠ ${fail} fotos quedaron como enlace)`:"Copia exportada: "+out.length+" juegos")};
 $("#impBtn").onclick=async()=>{if(await canEdit())$("#impFile").click()};
 $("#impFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.games))throw 0;
   if(remote&&!confirm(`Esto sustituye la lista de la nube por la de la copia (${d.games.length} juegos). ¿Seguro?`))return;
+  // fotos incrustadas en la copia: con Vercel Blob se vuelven a subir, para no mandar megas a la base de datos
+  const inl=remote&&features.blob?d.games.filter(g=>/^data:image\//.test(g.cover||"")):[];
+  if(inl.length){toast("Subiendo "+inl.length+" fotos…");for(const g of inl){try{g.cover=await uploadPhoto(await (await fetch(g.cover)).blob())}catch(e){}}}
   prefs={...prefs,...(d.prefs||{})};savePrefs();applyPrefs();await replaceAll(d.games);render();closeAll();toast("Copia importada: "+games.length+" juegos");kick()}catch(err){toast("Archivo no válido")}};
 $("#refetchBtn").onclick=()=>{games.filter(g=>!hasCover(g)&&!g.cover).forEach(g=>{broken.delete(g.id);enqueue(g,true)});closeAll();render();toast("Buscando portadas…")};
 $("#sndBtn").onclick=()=>{prefs.snd=!prefs.snd;savePrefs();saveLocal();syncPrefBtns();SFX.click()};
