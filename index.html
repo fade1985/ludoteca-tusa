@@ -515,9 +515,9 @@ function updateMode(){
   const info=$("#modeInfo"),kb=$("#keyBtn");
   kb.style.display=remote?"":"none";kb.textContent=editKey?"🔒 SALIR DEL MODO EDICIÓN":"🔑 ENTRAR EN MODO EDICIÓN";
   info.innerHTML=remote
-    ?`<b>☁ GUARDADO EN LA NUBE</b>Tus juegos se ven igual desde cualquier dispositivo. ${editKey?"Estás en <span style='color:var(--green)'>modo edición</span>.":"Ahora mismo solo puedes mirar: entra en modo edición para cambiar cosas."}<br>Portadas: ${features.igdb?"IGDB + Wikipedia":"Wikipedia (configura IGDB para mejores portadas)"} · Fotos: ${features.blob?"Vercel Blob":"dentro de la base de datos"}`
+    ?`<b>☁ GUARDADO EN LA NUBE</b>Tus juegos se ven igual desde cualquier dispositivo. ${editKey?"Estás en <span style='color:var(--green)'>modo edición</span>.":"Ahora mismo solo puedes mirar: entra en modo edición para cambiar cosas."}<br>Portadas: ${features.igdb?"IGDB (info extra de Wikipedia)":"falta configurar IGDB en Vercel"} · Fotos: ${features.blob?"Vercel Blob":"dentro de la base de datos"}`
     :`<b>💾 SOLO EN ESTE NAVEGADOR</b>${dbMissing?"El servidor está, pero falta conectar la base de datos (Upstash Redis) en Vercel. ":""}Los cambios se guardan aquí; exporta una copia de vez en cuando.`;
-  $("#foot").textContent=remote?"Portadas e info vía "+(features.igdb?"IGDB, ":"")+"Wikipedia / Wikidata · datos en la nube":"Portadas e info vía Wikipedia / Wikidata · tus datos se guardan en este navegador (exporta una copia desde ☰)";
+  $("#foot").textContent=remote?(features.igdb?"Portadas vía IGDB · ":"")+"info vía Wikipedia / Wikidata · datos en la nube":"Info vía Wikipedia / Wikidata (portadas: IGDB, solo en la nube) · tus datos se guardan en este navegador (exporta una copia desde ☰)";
   const b=$("#banner");
   if(remote&&emptyDb)b.innerHTML=`<span>☁ La nube está vacía. Sube esta lista (${games.length} juegos) para empezar a sincronizar.</span><button class="btn primary" id="upBtn">SUBIR LISTA</button>`;
   else if(dbMissing)b.innerHTML=`<span>⚠ Falta conectar la base de datos en Vercel: de momento todo se guarda solo en este navegador.</span>`;
@@ -577,7 +577,8 @@ async function fetchMeta(g){
     page=Object.values(d.query?.pages||{}).sort((a,b)=>a.index-b.index).find(p=>isGame(p)&&(similar(term,p.title)||similar(g.title,p.title)))||null;
   }
   if(!page) return {notFound:true,v4:true};
-  const meta={v4:true,wiki:page.fullurl,wikiTitle:page.title,img:page.thumbnail?.source||"",desc:page.extract||"",lang:"en"};
+  // la imagen de Wikipedia no se usa como portada (a menudo es un logo o una captura): las portadas son de IGDB
+  const meta={v4:true,wiki:page.fullurl,wikiTitle:page.title,img:"",desc:page.extract||"",lang:"en"};
   // descripción en español si existe
   const es=page.langlinks?.[0]?.["*"];
   if(es){try{
@@ -607,7 +608,7 @@ async function wikiSearch(term){
   const d=await wjson(WBASE+"&generator=search&gsrlimit=10&exlimit=10&gsrsearch="+encodeURIComponent(term+" video game"));
   return Object.values(d.query?.pages||{}).sort((a,b)=>a.index-b.index).filter(isGame).map(p=>({
     name:p.title.replace(/\s*\((\d{4} )?video game\)$/,""),year:(p.description||"").match(/\b(19|20)\d\d\b/)?.[0]||"",
-    platforms:[],switch:false,cover:p.thumbnail?.source||"",wikiTitle:p.title}));
+    platforms:[],switch:false,cover:"",wikiTitle:p.title}));
 }
 // candidatos de IGDB vía /api/search (solo en modo edición)
 const useIgdb=()=>remote&&features.igdb&&editKey;
@@ -644,7 +645,7 @@ function applyPick(g,c){
 async function enrichEs(g){
   const m=g.meta, w=await fetchMeta({title:g.title,q:m.name||g.q||g.title});
   m.esTried=true;
-  if(!w.notFound){if(w.lang==="es"){m.desc=w.desc;m.lang="es"}Object.assign(m,{wiki:w.wiki,wikiEs:w.wikiEs,wikiTitle:w.wikiTitle});if(!m.img&&w.img)m.img=w.img}
+  if(!w.notFound){if(w.lang==="es"){m.desc=w.desc;m.lang="es"}Object.assign(m,{wiki:w.wiki,wikiEs:w.wikiEs,wikiTitle:w.wikiTitle})}
 }
 async function resolveMeta(g){
   if(useIgdb()){try{const b=bestMatch(g,await igdbSearch(cleanTerm(g.q||g.title)));if(b)return {...b.meta,name:b.name}}catch(e){if(e.status===401)saveErr(e)}}
@@ -714,7 +715,8 @@ function chosenHTML(c,onlyPhoto){
 /* ===== RENDER ===== */
 function hue(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h}
 const GLYPHS=["★","♥","♦","♣","♠","☾","☀","⚔","✿","♪","☠","⚡"];
-function coverOf(g){return g.cover||g.meta?.img||""}
+// portada: la propia (foto/URL) o la de IGDB; las imágenes de Wikipedia guardadas de antes se ignoran
+function coverOf(g){return g.cover||(g.meta?.src==="igdb"&&g.meta.img)||""}
 const broken=new Set(); // portadas cuya imagen no carga (enlace roto)
 function imgErr(el){const id=el.dataset.gid;if(id)broken.add(id);el.remove()}
 function hasCover(g){return !!coverOf(g)&&!broken.has(g.id)}
@@ -839,6 +841,7 @@ function renderFicha(g){
       <div class="row">
         <button class="btn ${g.done?"":"primary"}" data-toggle="${g.id}">${g.done?"↺ MARCAR PENDIENTE":"✓ ¡ME LO HE PASADO!"}</button>
         <div class="rate">${[1,2,3,4,5].map(n=>`<button data-rate="${n}" class="${n<=g.rating?"on":""}" title="${n} estrellas">★</button>`).join("")}</div>
+        <button class="btn danger" id="eDel" style="margin-left:auto">🗑 ELIMINAR</button>
       </div>
       <div class="field"><label>MIS NOTAS</label><textarea id="notes" rows="3" ${ro?"readonly":""} placeholder="${ro?"Entra en modo edición (☰) para escribir notas":"Horas, final, logros, qué te pareció..."}">${esc(g.notes)}</textarea></div>
       <details id="editBox"><summary>EDITAR / CORREGIR</summary>
@@ -850,7 +853,7 @@ function renderFicha(g){
         <div class="field"><label>CATEGORÍA (elige una o escribe la tuya)</label><input id="eCat" list="catList" value="${esc(g.cat)}" placeholder="${esc(autoCat(g)||NOCAT)} (automática)"></div>
         <div class="field"><label>TÉRMINO DE BÚSQUEDA AUTOMÁTICA</label><input id="eQ" value="${esc(g.q)}" placeholder="${esc(g.title)}"></div>
         <div class="field"><label>URL DE PORTADA PERSONALIZADA</label><input id="eCover" value="${esc(g.cover.startsWith("data:")?"":g.cover)}" placeholder="${g.cover.startsWith("data:")?"(foto propia guardada)":"Pega aquí la URL de una imagen"}"></div>
-        <div class="row"><button class="btn primary" id="eSave">GUARDAR</button><button class="btn danger" id="eDel">🗑 ELIMINAR</button></div>
+        <div class="row"><button class="btn primary" id="eSave">GUARDAR</button></div>
       </details>
     </div>
   </div>`;
@@ -940,7 +943,7 @@ $("#addForm").onsubmit=async e=>{
 /* ===== REVISAR PORTADAS ===== */
 let revFilter="missing",revObs=null,revQ=[],revBusy=0;
 const revCands={};
-function srcLabel(g){return g.cover?(g.cover.startsWith("data:")||/blob\.vercel/.test(g.cover)?"FOTO PROPIA":"URL PROPIA"):!g.meta?"…":g.meta.notFound?"NO ENCONTRADO":g.meta.src==="igdb"?"IGDB":"WIKIPEDIA"}
+function srcLabel(g){return g.cover?(g.cover.startsWith("data:")||/blob\.vercel/.test(g.cover)?"FOTO PROPIA":"URL PROPIA"):!g.meta?"…":g.meta.notFound?"NO ENCONTRADO":g.meta.src==="igdb"?"IGDB":"SIN IGDB"}
 function revList(){
   const l=games.filter(g=>revFilter==="all"||(revFilter==="missing"?!hasCover(g):!g.manual&&!g.cover));
   return l.sort((a,b)=>sortKey(a.title).localeCompare(sortKey(b.title)));
